@@ -6,7 +6,51 @@ package db
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"fmt"
 )
+
+type TransactionTypeEnum string
+
+const (
+	TransactionTypeEnumDeposit  TransactionTypeEnum = "deposit"
+	TransactionTypeEnumWithdraw TransactionTypeEnum = "withdraw"
+)
+
+func (e *TransactionTypeEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = TransactionTypeEnum(s)
+	case string:
+		*e = TransactionTypeEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for TransactionTypeEnum: %T", src)
+	}
+	return nil
+}
+
+type NullTransactionTypeEnum struct {
+	TransactionTypeEnum TransactionTypeEnum `json:"transaction_type_enum"`
+	Valid               bool                `json:"valid"` // Valid is true if TransactionTypeEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullTransactionTypeEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.TransactionTypeEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.TransactionTypeEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullTransactionTypeEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.TransactionTypeEnum), nil
+}
 
 type Accounts struct {
 	ID            int32        `json:"id"`
@@ -27,16 +71,16 @@ type TransactionLogs struct {
 }
 
 type Transactions struct {
-	ID              int32          `json:"id"`
-	AccountID       sql.NullInt32  `json:"account_id"`
-	TransactionType sql.NullString `json:"transaction_type"`
-	Amount          string         `json:"amount"`
-	Status          sql.NullString `json:"status"`
-	ReferenceID     sql.NullString `json:"reference_id"`
-	TargetAccountID sql.NullInt32  `json:"target_account_id"`
-	Description     sql.NullString `json:"description"`
-	CreatedAt       sql.NullTime   `json:"created_at"`
-	UpdatedAt       sql.NullTime   `json:"updated_at"`
+	ID              int32                   `json:"id"`
+	AccountID       int32                   `json:"account_id"`
+	TransactionType NullTransactionTypeEnum `json:"transaction_type"`
+	Amount          string                  `json:"amount"`
+	Status          sql.NullString          `json:"status"`
+	ReferenceID     string                  `json:"reference_id"`
+	TargetAccountID sql.NullInt32           `json:"target_account_id"`
+	Description     sql.NullString          `json:"description"`
+	CreatedAt       sql.NullTime            `json:"created_at"`
+	UpdatedAt       sql.NullTime            `json:"updated_at"`
 }
 
 type Transfers struct {

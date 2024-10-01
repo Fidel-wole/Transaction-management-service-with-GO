@@ -47,3 +47,19 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (C
 	)
 	return i, err
 }
+
+const updateAccountBalance = `-- name: UpdateAccountBalance :exec
+UPDATE accounts
+SET balance = balance + $1
+WHERE id = $2
+`
+
+type UpdateAccountBalanceParams struct {
+	Balance string `json:"balance"`
+	ID      int32  `json:"id"`
+}
+
+func (q *Queries) UpdateAccountBalance(ctx context.Context, arg UpdateAccountBalanceParams) error {
+	_, err := q.db.ExecContext(ctx, updateAccountBalance, arg.Balance, arg.ID)
+	return err
+}
