@@ -8,5 +8,5 @@ UPDATE accounts
 SET balance = balance + $1
 WHERE id = $2;
 
--- name : GetAccountByUserId :one
+-- name: GetAccountByUserId :one
 SELECT * FROM accounts WHERE user_id = $1;

@@ -14,6 +14,7 @@ authRoutes := server.Group("/auth")
 authRoutes.Use(middleware.AuthMiddleware())
 {
 	authRoutes.POST("/deposit", controllers.DepositMoney)
+	authRoutes.POST("/transfer", controllers.TransferMoney)
 }
 
 }

@@ -48,6 +48,25 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (C
 	return i, err
 }
 
+const getAccountByUserId = `-- name: GetAccountByUserId :one
+SELECT id, user_id, account_number, balance, currency, created_at, updated_at FROM accounts WHERE user_id = $1
+`
+
+func (q *Queries) GetAccountByUserId(ctx context.Context, userID int64) (Accounts, error) {
+	row := q.db.QueryRowContext(ctx, getAccountByUserId, userID)
+	var i Accounts
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.AccountNumber,
+		&i.Balance,
+		&i.Currency,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateAccountBalance = `-- name: UpdateAccountBalance :exec
 UPDATE accounts
 SET balance = balance + $1

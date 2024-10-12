@@ -10,6 +10,38 @@ import (
 	"database/sql"
 )
 
+const createCreditTransaction = `-- name: CreateCreditTransaction :exec
+INSERT INTO transactions (account_id, transaction_type, amount, status, reference_id)
+VALUES ($1, 'deposit', $2, 'completed', $3)
+`
+
+type CreateCreditTransactionParams struct {
+	AccountID   int32  `json:"account_id"`
+	Amount      string `json:"amount"`
+	ReferenceID string `json:"reference_id"`
+}
+
+func (q *Queries) CreateCreditTransaction(ctx context.Context, arg CreateCreditTransactionParams) error {
+	_, err := q.db.ExecContext(ctx, createCreditTransaction, arg.AccountID, arg.Amount, arg.ReferenceID)
+	return err
+}
+
+const createDebitTransaction = `-- name: CreateDebitTransaction :exec
+INSERT INTO transactions (account_id, transaction_type, amount, status, reference_id)
+VALUES ($1, 'withdraw', $2, 'completed', $3)
+`
+
+type CreateDebitTransactionParams struct {
+	AccountID   int32  `json:"account_id"`
+	Amount      string `json:"amount"`
+	ReferenceID string `json:"reference_id"`
+}
+
+func (q *Queries) CreateDebitTransaction(ctx context.Context, arg CreateDebitTransactionParams) error {
+	_, err := q.db.ExecContext(ctx, createDebitTransaction, arg.AccountID, arg.Amount, arg.ReferenceID)
+	return err
+}
+
 const deposit = `-- name: Deposit :one
 INSERT INTO transactions (account_id, transaction_type, amount, status, reference_id)
 VALUES ($1, 'deposit', $2, 'pending', $3)
@@ -43,4 +75,49 @@ func (q *Queries) Deposit(ctx context.Context, arg DepositParams) (DepositRow, e
 		&i.ReferenceID,
 	)
 	return i, err
+}
+
+const getAccountIDByAccountNumber = `-- name: GetAccountIDByAccountNumber :one
+SELECT id
+FROM accounts
+WHERE account_number = $1
+`
+
+func (q *Queries) GetAccountIDByAccountNumber(ctx context.Context, accountNumber string) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getAccountIDByAccountNumber, accountNumber)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const updateReceiverBalance = `-- name: UpdateReceiverBalance :exec
+UPDATE accounts
+SET balance = balance + $2
+WHERE account_number = $1
+`
+
+type UpdateReceiverBalanceParams struct {
+	AccountNumber string `json:"account_number"`
+	Balance       string `json:"balance"`
+}
+
+func (q *Queries) UpdateReceiverBalance(ctx context.Context, arg UpdateReceiverBalanceParams) error {
+	_, err := q.db.ExecContext(ctx, updateReceiverBalance, arg.AccountNumber, arg.Balance)
+	return err
+}
+
+const updateSenderBalance = `-- name: UpdateSenderBalance :exec
+UPDATE accounts
+SET balance = balance - $2
+WHERE account_number = $1
+`
+
+type UpdateSenderBalanceParams struct {
+	AccountNumber string `json:"account_number"`
+	Balance       string `json:"balance"`
+}
+
+func (q *Queries) UpdateSenderBalance(ctx context.Context, arg UpdateSenderBalanceParams) error {
+	_, err := q.db.ExecContext(ctx, updateSenderBalance, arg.AccountNumber, arg.Balance)
+	return err
 }
