@@ -13,6 +13,7 @@ server.POST("/login", controllers.Login)
 authRoutes := server.Group("/auth")
 authRoutes.Use(middleware.AuthMiddleware())
 {
+	authRoutes.GET("/account", controllers.GetAccountByUserId)
 	authRoutes.POST("/deposit", controllers.DepositMoney)
 	authRoutes.POST("/transfer", controllers.TransferMoney)
 }

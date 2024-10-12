@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	
 	"net/http"
 
 	db "github.com/Fidel-wole/Transaction_Management_Service/db"
@@ -78,7 +79,8 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid password"})
 		return
 	}
-    token, err := utils.GenerateToken(user.Email, int64(user.ID))
+    token, err := utils.GenerateToken(user.Email, int64(existingUser.ID))
+
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Could not generate token"})
 		return
